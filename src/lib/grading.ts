@@ -1,4 +1,5 @@
 import { generateObject } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 
 const gradingSchema = z.object({
@@ -8,11 +9,11 @@ const gradingSchema = z.object({
 
 export type GradingResult = z.infer<typeof gradingSchema>;
 
-const MODEL = process.env.CLAUDE_GRADING_MODEL ?? 'anthropic/claude-sonnet-4-5';
+const MODEL = process.env.CLAUDE_GRADING_MODEL ?? 'claude-sonnet-4-5';
 
 export async function gradeAnswer(word: string, userAnswer: string): Promise<GradingResult> {
   const { object } = await generateObject({
-    model: MODEL,
+    model: anthropic(MODEL),
     schema: gradingSchema,
     prompt: [
       `영단어: "${word}"`,
