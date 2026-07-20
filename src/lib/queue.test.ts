@@ -23,4 +23,13 @@ describe('requeueWrongAnswer', () => {
     expect(result[result.length - 1]).toBe('X');
     expect(result).toHaveLength(5);
   });
+
+  it('documents that the very last question has no room to delay into (lands immediately next)', () => {
+    const queue = [0, 1, 2]; // currentIndex 2 is the last index -> 0 remaining after it
+    const result = requeueWrongAnswer(queue, 2, 'X' as unknown as number);
+    expect(result).toEqual([0, 1, 2, 'X']);
+    // 'X' is now at index 3 = currentIndex(2) + 1, i.e. immediately next.
+    // This is an inherent boundary case, not a bug: there are zero remaining
+    // questions after the last item to delay the reinsertion into.
+  });
 });

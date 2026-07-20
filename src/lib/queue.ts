@@ -6,6 +6,8 @@ export function requeueWrongAnswer<T>(
 ): T[] {
   const remaining = queue.length - currentIndex - 1;
 
+  // When remaining < 5, append to end. When remaining === 0 (last question),
+  // this necessarily reinserts immediately next—no room to delay into.
   if (remaining < 5) {
     return [...queue, item];
   }
