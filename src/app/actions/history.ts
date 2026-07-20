@@ -1,8 +1,8 @@
 'use server';
 
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { attempts, words, wordbooks } from '@/db/schema';
+import { attempts, words, wordbooks, wordProgress } from '@/db/schema';
 
 export interface SessionSummary {
   sessionId: string;
@@ -66,4 +66,24 @@ export async function getSessionDetail(sessionId: string): Promise<SessionDetail
     .innerJoin(words, eq(words.id, attempts.wordId))
     .where(eq(attempts.sessionId, sessionId))
     .orderBy(attempts.createdAt);
+}
+
+export interface WeakWord {
+  word: string;
+  day: number;
+  wrongRounds: number[];
+  retired: boolean;
+}
+
+export async function listWeakWords(wordbookId: number): Promise<WeakWord[]> {
+  return db
+    .select({
+      word: words.word,
+      day: words.day,
+      wrongRounds: wordProgress.wrongRounds,
+      retired: wordProgress.retired,
+    })
+    .from(wordProgress)
+    .innerJoin(words, eq(words.id, wordProgress.wordId))
+    .where(and(eq(words.wordbookId, wordbookId), sql`array_length(${wordProgress.wrongRounds}, 1) >= 3`));
 }
