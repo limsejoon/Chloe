@@ -87,3 +87,35 @@ export async function listWeakWords(wordbookId: number): Promise<WeakWord[]> {
     .innerJoin(words, eq(words.id, wordProgress.wordId))
     .where(and(eq(words.wordbookId, wordbookId), sql`array_length(${wordProgress.wrongRounds}, 1) >= 3`));
 }
+
+export interface DayBreakdown {
+  day: number;
+  total: number;
+  correctCount: number;
+  wrongCount: number;
+  pendingCount: number;
+}
+
+export async function getDayBreakdown(wordbookId: number): Promise<DayBreakdown[]> {
+  const rows = await db
+    .select({
+      day: words.day,
+      retired: wordProgress.retired,
+      hasProgress: sql<boolean>`${wordProgress.wordId} is not null`,
+    })
+    .from(words)
+    .leftJoin(wordProgress, eq(wordProgress.wordId, words.id))
+    .where(eq(words.wordbookId, wordbookId));
+
+  const byDay = new Map<number, DayBreakdown>();
+  for (const row of rows) {
+    const entry = byDay.get(row.day) ?? { day: row.day, total: 0, correctCount: 0, wrongCount: 0, pendingCount: 0 };
+    entry.total += 1;
+    if (row.retired) entry.correctCount += 1;
+    else if (row.hasProgress) entry.wrongCount += 1;
+    else entry.pendingCount += 1;
+    byDay.set(row.day, entry);
+  }
+
+  return [...byDay.values()].sort((a, b) => a.day - b.day);
+}
