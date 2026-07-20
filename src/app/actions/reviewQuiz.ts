@@ -79,13 +79,6 @@ export async function startReviewSession(
   const pool = selectReviewPool(candidates);
   const selected = sampleRandom(pool, count);
 
-  if (selected.length > 0) {
-    await db
-      .insert(wordProgress)
-      .values(selected.map((c) => ({ wordId: c.wordId })))
-      .onConflictDoNothing({ target: wordProgress.wordId });
-  }
-
   return {
     sessionId: randomUUID(),
     words: selected.map((c) => ({ id: c.wordId, day: c.day, word: c.word, round: c.round })),
@@ -121,34 +114,47 @@ export async function submitReviewAnswer(
       }
     : initialProgress();
 
-  const nextState = applyAnswer(currentState, result.correct);
+  let nextState: WordProgressState;
+  try {
+    nextState = applyAnswer(currentState, result.correct);
+  } catch {
+    return {
+      ...result,
+      retired: currentState.retired,
+      nextRound: currentState.round,
+      isWeak: isWeakWord(currentState),
+      justBecameWeak: false,
+      saveWarning: '이미 완료된 단어입니다. 결과가 저장되지 않았습니다.',
+    };
+  }
 
   let saveWarning: string | null = null;
   try {
-    await db
-      .insert(wordProgress)
-      .values({ wordId, ...nextState, updatedAt: new Date() })
-      .onConflictDoUpdate({
-        target: wordProgress.wordId,
-        set: {
-          round: nextState.round,
-          status: nextState.status,
-          missedThisRound: nextState.missedThisRound,
-          wrongRounds: nextState.wrongRounds,
-          retired: nextState.retired,
-          updatedAt: new Date(),
-        },
-      });
-
-    await db.insert(attempts).values({
-      sessionId,
-      wordId,
-      mode: 'review',
-      round: currentState.round,
-      userAnswer,
-      isCorrect: result.correct,
-      feedback: result.feedback,
-    });
+    await db.batch([
+      db
+        .insert(wordProgress)
+        .values({ wordId, ...nextState, updatedAt: new Date() })
+        .onConflictDoUpdate({
+          target: wordProgress.wordId,
+          set: {
+            round: nextState.round,
+            status: nextState.status,
+            missedThisRound: nextState.missedThisRound,
+            wrongRounds: nextState.wrongRounds,
+            retired: nextState.retired,
+            updatedAt: new Date(),
+          },
+        }),
+      db.insert(attempts).values({
+        sessionId,
+        wordId,
+        mode: 'review',
+        round: currentState.round,
+        userAnswer,
+        isCorrect: result.correct,
+        feedback: result.feedback,
+      }),
+    ]);
   } catch {
     saveWarning = '결과 저장에 실패했습니다. 진행에는 문제없습니다.';
   }
