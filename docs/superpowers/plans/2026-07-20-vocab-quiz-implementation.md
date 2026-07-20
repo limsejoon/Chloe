@@ -174,7 +174,8 @@ This mirrors spec §5 exactly: `wordbooks`/`words`/`word_progress`/`attempts`, w
 Create `src/db/client.ts`:
 
 ```ts
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
 import * as schema from './schema';
@@ -183,12 +184,15 @@ const sql = neon(process.env.DATABASE_URL!);
 export const db = drizzle(sql, { schema });
 ```
 
+`dotenv/config`'s default loader only reads a file named `.env`; this project's secrets live in `.env.local` (Next.js convention), so the path must be passed explicitly or standalone scripts (seed, verification one-liners) silently fail to find `DATABASE_URL`.
+
 - [ ] **Step 3: Write the drizzle-kit config**
 
 Create `drizzle.config.ts`:
 
 ```ts
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
 import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
