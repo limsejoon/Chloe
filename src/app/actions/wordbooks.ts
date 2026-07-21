@@ -1,8 +1,8 @@
 'use server';
 
-import { asc, eq, sql } from 'drizzle-orm';
+import { asc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { wordbooks, words } from '@/db/schema';
+import { wordbooks, words, wordProgress, attempts } from '@/db/schema';
 
 export interface WordbookOption {
   id: number;
@@ -19,4 +19,13 @@ export async function listWordbooks(): Promise<WordbookOption[]> {
     .orderBy(asc(wordbooks.name));
 
   return rows.map((r) => ({ id: r.id, name: r.name, maxDay: Number(r.maxDay) }));
+}
+
+export async function resetWordbook(wordbookId: number): Promise<void> {
+  const wordRows = await db.select({ id: words.id }).from(words).where(eq(words.wordbookId, wordbookId));
+  const wordIds = wordRows.map((w) => w.id);
+  if (wordIds.length === 0) return;
+
+  await db.delete(wordProgress).where(inArray(wordProgress.wordId, wordIds));
+  await db.delete(attempts).where(inArray(attempts.wordId, wordIds));
 }
