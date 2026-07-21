@@ -22,7 +22,7 @@ export function FlashcardInput({ word, isLast, submitting, onNext }: FlashcardIn
         {word}
       </div>
       <input
-        className="rounded-xl border-[1.5px] border-border bg-surface p-3.5 text-text placeholder:text-text-faint focus:border-primary focus:outline-none"
+        className="field-input placeholder:text-text-faint"
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         placeholder="뜻, 비슷한말, 설명, 영어 예문 등 자유롭게"

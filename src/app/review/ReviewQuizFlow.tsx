@@ -101,7 +101,7 @@ export function ReviewQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-text-muted">단어장</label>
           <select
-            className="rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
+            className="field-input"
             value={wordbookId}
             onChange={(e) => setWordbookId(Number(e.target.value))}
           >
@@ -114,17 +114,17 @@ export function ReviewQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-text-muted">DAY</label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-xl border border-border bg-bg p-1 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary-tint">
             <input
               type="number"
-              className="w-24 rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
+              className="min-w-0 flex-1 rounded-lg bg-transparent p-2 text-center text-text outline-none [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               value={dayFrom}
               onChange={(e) => setDayFrom(Number(e.target.value))}
             />
-            <span className="text-text-faint">~</span>
+            <span className="text-sm font-semibold text-text-faint">~</span>
             <input
               type="number"
-              className="w-24 rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
+              className="min-w-0 flex-1 rounded-lg bg-transparent p-2 text-center text-text outline-none [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               value={dayTo}
               onChange={(e) => setDayTo(Number(e.target.value))}
             />
@@ -134,7 +134,7 @@ export function ReviewQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
           <label className="text-xs font-bold text-text-muted">테스트할 문제 수</label>
           <input
             type="number"
-            className="rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
+            className="field-input"
             min={1}
             value={count}
             onChange={(e) => setCount(Number(e.target.value))}

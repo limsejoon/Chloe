@@ -53,7 +53,7 @@ export function ReadingLogFlow() {
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-text-muted">책 제목</label>
           <input
-            className="rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
+            className="field-input"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={stage === 'generating'}
@@ -62,7 +62,7 @@ export function ReadingLogFlow() {
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-text-muted">지은이</label>
           <input
-            className="rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
+            className="field-input"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
             disabled={stage === 'generating'}
@@ -141,7 +141,7 @@ export function ReadingLogFlow() {
         <div key={i} className="flex flex-col gap-1.5">
           <label className="text-sm font-bold text-text">{q}</label>
           <textarea
-            className="min-h-32 rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
+            className="field-input min-h-32 placeholder:text-text-faint"
             value={answers[i]}
             onChange={(e) => {
               const next = [...answers];

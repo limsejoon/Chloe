@@ -1,6 +1,6 @@
 'use server';
 
-import { asc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { wordbooks, words, wordProgress, attempts } from '@/db/schema';
 
@@ -16,7 +16,7 @@ export async function listWordbooks(): Promise<WordbookOption[]> {
     .from(wordbooks)
     .innerJoin(words, eq(words.wordbookId, wordbooks.id))
     .groupBy(wordbooks.id, wordbooks.name)
-    .orderBy(asc(wordbooks.name));
+    .orderBy(desc(sql`${wordbooks.name} = 'HS_complete'`), asc(wordbooks.name));
 
   return rows.map((r) => ({ id: r.id, name: r.name, maxDay: Number(r.maxDay) }));
 }
