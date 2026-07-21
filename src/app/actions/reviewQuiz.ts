@@ -1,13 +1,13 @@
 'use server';
 
 import { randomUUID } from 'crypto';
-import { and, eq, gte, lte } from 'drizzle-orm';
+import { and, eq, gte, lte, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { words, wordProgress, attempts } from '@/db/schema';
 import { sampleRandom } from '@/lib/sampleRandom';
 import { selectReviewPool, type ReviewPoolEntry } from '@/lib/reviewPool';
-import { applyAnswer, initialProgress, isWeakWord, type WordProgressState } from '@/lib/reviewTransition';
-import { gradeAnswer, type GradingResult } from '@/lib/grading';
+import { applyAnswer, initialProgress, type WordProgressState } from '@/lib/reviewTransition';
+import { gradeAnswers, type GradingResult } from '@/lib/grading';
 
 interface ReviewCandidate extends ReviewPoolEntry {
   day: number;
@@ -87,84 +87,146 @@ export async function startReviewSession(
   };
 }
 
-export interface ReviewAnswerResult extends GradingResult {
+export interface ReviewAnswer {
+  wordId: number;
+  word: string;
+  userAnswer: string;
+}
+
+export interface ReviewBatchResultItem extends GradingResult {
+  wordId: number;
+  word: string;
   retired: boolean;
   nextRound: number;
-  isWeak: boolean;
-  justBecameWeak: boolean;
+}
+
+export interface SubmitReviewSessionBatchResult {
+  results: ReviewBatchResultItem[];
+  graduated: number;
+  carried: number;
+  weakWords: string[];
   saveWarning: string | null;
 }
 
-export async function submitReviewAnswer(
+export async function submitReviewSessionBatch(
   sessionId: string,
-  wordId: number,
-  word: string,
-  userAnswer: string
-): Promise<ReviewAnswerResult> {
-  const result = await gradeAnswer(word, userAnswer);
+  items: ReviewAnswer[]
+): Promise<SubmitReviewSessionBatchResult> {
+  const graded = await gradeAnswers(items.map((item) => ({ word: item.word, userAnswer: item.userAnswer })));
 
-  const [progressRow] = await db.select().from(wordProgress).where(eq(wordProgress.wordId, wordId));
-  const currentState: WordProgressState = progressRow
-    ? {
-        round: progressRow.round,
-        status: progressRow.status,
-        missedThisRound: progressRow.missedThisRound,
-        wrongRounds: progressRow.wrongRounds,
-        retired: progressRow.retired,
+  const wordIds = items.map((item) => item.wordId);
+  const progressRows =
+    wordIds.length > 0 ? await db.select().from(wordProgress).where(inArray(wordProgress.wordId, wordIds)) : [];
+  const progressByWordId = new Map(progressRows.map((row) => [row.wordId, row]));
+
+  const results: ReviewBatchResultItem[] = [];
+  const progressUpdates: {
+    wordId: number;
+    round: number;
+    status: 'pending' | 'correct';
+    missedThisRound: boolean;
+    wrongRounds: number[];
+    retired: boolean;
+    updatedAt: Date;
+  }[] = [];
+  const attemptRows: {
+    sessionId: string;
+    wordId: number;
+    mode: 'review';
+    round: number;
+    userAnswer: string;
+    isCorrect: boolean;
+    feedback: string;
+  }[] = [];
+  let graduated = 0;
+  let carried = 0;
+  const weakWords: string[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const gradeResult = graded[i];
+    const progressRow = progressByWordId.get(item.wordId);
+    const currentState: WordProgressState = progressRow
+      ? {
+          round: progressRow.round,
+          status: progressRow.status,
+          missedThisRound: progressRow.missedThisRound,
+          wrongRounds: progressRow.wrongRounds,
+          retired: progressRow.retired,
+        }
+      : initialProgress();
+
+    let nextState: WordProgressState;
+    try {
+      nextState = applyAnswer(currentState, gradeResult.correct);
+    } catch {
+      results.push({
+        wordId: item.wordId,
+        word: item.word,
+        correct: gradeResult.correct,
+        feedback: gradeResult.feedback,
+        retired: currentState.retired,
+        nextRound: currentState.round,
+      });
+      continue;
+    }
+
+    if (gradeResult.correct) {
+      if (nextState.retired) {
+        graduated += 1;
+      } else {
+        carried += 1;
       }
-    : initialProgress();
+      if (nextState.wrongRounds.length === 3) {
+        weakWords.push(item.word);
+      }
+    }
 
-  let nextState: WordProgressState;
-  try {
-    nextState = applyAnswer(currentState, result.correct);
-  } catch {
-    return {
-      ...result,
-      retired: currentState.retired,
-      nextRound: currentState.round,
-      isWeak: isWeakWord(currentState),
-      justBecameWeak: false,
-      saveWarning: '이미 완료된 단어입니다. 결과가 저장되지 않았습니다.',
-    };
+    progressUpdates.push({ wordId: item.wordId, ...nextState, updatedAt: new Date() });
+    attemptRows.push({
+      sessionId,
+      wordId: item.wordId,
+      mode: 'review',
+      round: currentState.round,
+      userAnswer: item.userAnswer,
+      isCorrect: gradeResult.correct,
+      feedback: gradeResult.feedback,
+    });
+
+    results.push({
+      wordId: item.wordId,
+      word: item.word,
+      correct: gradeResult.correct,
+      feedback: gradeResult.feedback,
+      retired: nextState.retired,
+      nextRound: nextState.round,
+    });
   }
 
   let saveWarning: string | null = null;
-  try {
-    await db.batch([
-      db
-        .insert(wordProgress)
-        .values({ wordId, ...nextState, updatedAt: new Date() })
-        .onConflictDoUpdate({
-          target: wordProgress.wordId,
-          set: {
-            round: nextState.round,
-            status: nextState.status,
-            missedThisRound: nextState.missedThisRound,
-            wrongRounds: nextState.wrongRounds,
-            retired: nextState.retired,
-            updatedAt: new Date(),
-          },
-        }),
-      db.insert(attempts).values({
-        sessionId,
-        wordId,
-        mode: 'review',
-        round: currentState.round,
-        userAnswer,
-        isCorrect: result.correct,
-        feedback: result.feedback,
-      }),
-    ]);
-  } catch {
-    saveWarning = '결과 저장에 실패했습니다. 진행에는 문제없습니다.';
+  if (progressUpdates.length > 0) {
+    try {
+      await db.batch([
+        db
+          .insert(wordProgress)
+          .values(progressUpdates)
+          .onConflictDoUpdate({
+            target: wordProgress.wordId,
+            set: {
+              round: sql`excluded.round`,
+              status: sql`excluded.status`,
+              missedThisRound: sql`excluded.missed_this_round`,
+              wrongRounds: sql`excluded.wrong_rounds`,
+              retired: sql`excluded.retired`,
+              updatedAt: sql`excluded.updated_at`,
+            },
+          }),
+        db.insert(attempts).values(attemptRows),
+      ]);
+    } catch {
+      saveWarning = '결과 저장에 실패했습니다. 진행에는 문제없습니다.';
+    }
   }
 
-  return {
-    ...result,
-    retired: nextState.retired,
-    nextRound: nextState.round,
-    isWeak: isWeakWord(nextState),
-    justBecameWeak: nextState.wrongRounds.length === 3,
-    saveWarning,
-  };
+  return { results, graduated, carried, weakWords, saveWarning };
 }
