@@ -45,3 +45,21 @@ export const attempts = pgTable('attempts', {
   feedback: text('feedback').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const readingLogs = pgTable('reading_logs', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  author: text('author').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const readingLogQa = pgTable('reading_log_qa', {
+  id: serial('id').primaryKey(),
+  readingLogId: integer('reading_log_id')
+    .notNull()
+    .references(() => readingLogs.id),
+  questionIndex: integer('question_index').notNull(),
+  question: text('question').notNull(),
+  answer: text('answer').notNull(),
+  feedback: text('feedback').notNull(),
+});
