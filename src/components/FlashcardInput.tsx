@@ -25,7 +25,7 @@ export function FlashcardInput({ word, isLast, submitting, onNext }: FlashcardIn
         className="rounded-xl border-[1.5px] border-border bg-surface p-3.5 text-text placeholder:text-text-faint focus:border-primary focus:outline-none"
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
-        placeholder="한글 뜻 또는 영어 예문"
+        placeholder="뜻, 비슷한말, 설명, 영어 예문 등 자유롭게"
         disabled={submitting}
       />
       <button
