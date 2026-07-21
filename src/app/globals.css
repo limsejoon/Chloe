@@ -1,26 +1,73 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #4257b2;
+  --color-primary-dark: #34459a;
+  --color-primary-tint: #e8ebf9;
+  --color-accent: #1fa6a1;
+  --color-accent-tint: #e1f5f3;
+  --color-success: #1f9d55;
+  --color-success-bg: #e6f6ec;
+  --color-error: #d8464b;
+  --color-error-bg: #fceaea;
+  --color-warning: #c97f1a;
+  --color-warning-bg: #fcf1e0;
+  --bg: #f5f6fc;
+  --surface: #ffffff;
+  --border: #e4e6f5;
+  --text: #23263b;
+  --text-muted: #6b7099;
+  --text-faint: #9599bc;
+  --shadow-card: 0 1px 2px rgba(35, 38, 59, 0.04), 0 8px 24px rgba(35, 38, 59, 0.06);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-tint: var(--color-primary-tint);
+  --color-accent: var(--color-accent);
+  --color-accent-tint: var(--color-accent-tint);
+  --color-success: var(--color-success);
+  --color-success-bg: var(--color-success-bg);
+  --color-error: var(--color-error);
+  --color-error-bg: var(--color-error-bg);
+  --color-warning: var(--color-warning);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --shadow-card: var(--shadow-card);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-primary: #8c9eea;
+    --color-primary-dark: #a6b4ef;
+    --color-primary-tint: #262b4d;
+    --color-accent: #4fd9d3;
+    --color-accent-tint: #163632;
+    --color-success: #4ade80;
+    --color-success-bg: #113322;
+    --color-error: #f27c81;
+    --color-error-bg: #3a1618;
+    --color-warning: #f0b354;
+    --color-warning-bg: #3a2b10;
+    --bg: #12142a;
+    --surface: #1b1e3b;
+    --border: #2e3260;
+    --text: #ecedfb;
+    --text-muted: #a6abd6;
+    --text-faint: #71759e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2), 0 12px 28px rgba(0, 0, 0, 0.35);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
 }

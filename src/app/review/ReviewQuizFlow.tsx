@@ -59,9 +59,9 @@ export function ReviewQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
 
   if (!sessionId || !queue) {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 rounded-[20px] bg-surface p-5 shadow-card">
         <select
-          className="rounded border p-2"
+          className="rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
           value={wordbookId}
           onChange={(e) => setWordbookId(Number(e.target.value))}
         >
@@ -74,33 +74,36 @@ export function ReviewQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
         <div className="flex items-center gap-2">
           <input
             type="number"
-            className="w-24 rounded border p-2"
+            className="w-24 rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
             value={dayFrom}
             onChange={(e) => setDayFrom(Number(e.target.value))}
           />
-          <span>~</span>
+          <span className="text-text-faint">~</span>
           <input
             type="number"
-            className="w-24 rounded border p-2"
+            className="w-24 rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
             value={dayTo}
             onChange={(e) => setDayTo(Number(e.target.value))}
           />
         </div>
         <input
           type="number"
-          className="rounded border p-2"
+          className="rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
           min={1}
           value={count}
           onChange={(e) => setCount(Number(e.target.value))}
         />
         {status && (
-          <div className="text-sm text-gray-600">
+          <div className="rounded-2xl bg-bg px-4 py-3 text-sm font-medium text-text-muted">
             전체 단어수 {status.total}, 맞은수 {status.correctCount}, 틀린수 {status.wrongCount}, 대기{' '}
             {status.pendingCount}
           </div>
         )}
-        {notice && <div className="text-sm text-amber-600">{notice}</div>}
-        <button className="rounded bg-blue-600 p-2 text-white" onClick={handleStart}>
+        {notice && <div className="text-sm font-medium text-warning">{notice}</div>}
+        <button
+          className="rounded-full bg-primary p-3.5 font-bold text-white transition hover:bg-primary-dark"
+          onClick={handleStart}
+        >
           회독 시작
         </button>
       </div>
@@ -109,20 +112,26 @@ export function ReviewQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
 
   if (index >= queue.length) {
     return (
-      <div className="flex flex-col gap-2">
-        <div className="text-lg font-bold">
+      <div className="flex flex-col gap-3 rounded-[20px] bg-surface p-5 shadow-card">
+        <div className="text-lg font-extrabold text-primary">
           이번 세션 {answerCount}번 답변 중 {correctAnswerCount}번 정답
         </div>
-        <div>졸업한 단어: {graduated}개</div>
-        <div>다음 회독으로 이월된 단어: {carried}개</div>
+        <div className="flex gap-2">
+          <span className="rounded-full bg-success-bg px-3 py-1 text-xs font-bold text-success">
+            졸업한 단어 {graduated}개
+          </span>
+          <span className="rounded-full bg-primary-tint px-3 py-1 text-xs font-bold text-primary">
+            다음 회독 이월 {carried}개
+          </span>
+        </div>
         {weakWords.length > 0 && (
-          <div className="rounded bg-yellow-50 p-2">
-            <div className="font-semibold">취약 단어</div>
-            <div>{weakWords.join(', ')}</div>
+          <div className="rounded-2xl bg-warning-bg p-3">
+            <div className="text-xs font-bold text-warning">⚠ 취약 단어</div>
+            <div className="mt-0.5 text-sm text-text">{weakWords.join(', ')}</div>
           </div>
         )}
         {finalStatus && (
-          <div className="text-sm text-gray-600">
+          <div className="rounded-2xl bg-bg px-4 py-3 text-sm font-medium text-text-muted">
             전체 단어수 {finalStatus.total}, 맞은수 {finalStatus.correctCount}, 틀린수 {finalStatus.wrongCount}, 대기{' '}
             {finalStatus.pendingCount}
           </div>
@@ -134,10 +143,10 @@ export function ReviewQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
   const current = queue[index];
   return (
     <div className="flex flex-col gap-3">
-      {notice && <div className="text-sm text-amber-600">{notice}</div>}
-      <div className="text-sm text-gray-500">
+      {notice && <div className="text-sm font-medium text-warning">{notice}</div>}
+      <span className="w-fit rounded-full bg-primary-tint px-3 py-1 text-xs font-bold text-primary">
         {current.round}회독 · 이번 세션 {index + 1} / {queue.length}
-      </div>
+      </span>
       <AnswerForm
         key={`${current.id}-${index}`}
         word={current.word}

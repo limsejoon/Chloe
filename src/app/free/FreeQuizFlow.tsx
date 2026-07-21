@@ -29,9 +29,9 @@ export function FreeQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
 
   if (!session) {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 rounded-[20px] bg-surface p-5 shadow-card">
         <select
-          className="rounded border p-2"
+          className="rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
           value={wordbookId}
           onChange={(e) => setWordbookId(Number(e.target.value))}
         >
@@ -44,27 +44,30 @@ export function FreeQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
         <div className="flex items-center gap-2">
           <input
             type="number"
-            className="w-24 rounded border p-2"
+            className="w-24 rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
             value={dayFrom}
             onChange={(e) => setDayFrom(Number(e.target.value))}
           />
-          <span>~</span>
+          <span className="text-text-faint">~</span>
           <input
             type="number"
-            className="w-24 rounded border p-2"
+            className="w-24 rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
             value={dayTo}
             onChange={(e) => setDayTo(Number(e.target.value))}
           />
         </div>
         <input
           type="number"
-          className="rounded border p-2"
+          className="rounded-xl border-[1.5px] border-border bg-surface p-3 text-text focus:border-primary focus:outline-none"
           min={1}
           max={30}
           value={count}
           onChange={(e) => setCount(Number(e.target.value))}
         />
-        <button className="rounded bg-blue-600 p-2 text-white" onClick={handleStart}>
+        <button
+          className="rounded-full bg-primary p-3.5 font-bold text-white transition hover:bg-primary-dark"
+          onClick={handleStart}
+        >
           퀴즈 시작
         </button>
       </div>
@@ -74,14 +77,24 @@ export function FreeQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
   if (index >= session.words.length) {
     const correctCount = results.filter((r) => r.correct).length;
     return (
-      <div className="flex flex-col gap-2">
-        <div className="text-lg font-bold">
+      <div className="flex flex-col gap-3 rounded-[20px] bg-surface p-5 shadow-card">
+        <div className="text-lg font-extrabold text-primary">
           {session.words.length}문제 중 {correctCount}개 정답
         </div>
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-2">
           {results.map((r, i) => (
-            <li key={i}>
-              {r.word}: {r.correct ? 'O' : 'X'}
+            <li
+              key={i}
+              className="flex items-center justify-between rounded-2xl bg-bg px-4 py-2.5 text-sm font-medium text-text"
+            >
+              {r.word}
+              <span
+                className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
+                  r.correct ? 'bg-success' : 'bg-error'
+                }`}
+              >
+                {r.correct ? 'O' : 'X'}
+              </span>
             </li>
           ))}
         </ul>
@@ -92,10 +105,10 @@ export function FreeQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
   const current = session.words[index];
   return (
     <div className="flex flex-col gap-3">
-      {notice && <div className="text-sm text-amber-600">{notice}</div>}
-      <div className="text-sm text-gray-500">
+      {notice && <div className="text-sm font-medium text-warning">{notice}</div>}
+      <span className="w-fit rounded-full bg-primary-tint px-3 py-1 text-xs font-bold text-primary">
         {index + 1} / {session.words.length}
-      </div>
+      </span>
       <AnswerForm
         key={current.id}
         word={current.word}
