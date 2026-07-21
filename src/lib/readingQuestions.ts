@@ -28,6 +28,8 @@ export async function generateReadingQuestions(title: string, author: string): P
     '- 2번 질문: 감상이나 의견을 묻지 않는, 순수한 사실 확인 질문. 책의 다른 특정 장면/사건에서 실제로 무슨 일이 있었는지만 요약하게 하세요. (예: "OO 장면에서 정확히 무슨 일이 있었는지 설명해봐.")',
     '',
     '세 질문 모두 이 책의 실제 등장인물·사건·상황을 구체적으로 지목해야 하며, 책을 제대로 읽지 않으면 답할 수 없는 수준이어야 합니다.',
+    '',
+    '언어: 책 제목/지은이가 영어로 되어 있으면(즉 아이가 원서를 영어로 읽는 경우) 질문을 전부 영어로 작성하세요. 한국어로 되어 있으면 한국어로 작성하세요.',
   ].join('\n');
 
   const { object } = await generateObject({
@@ -69,7 +71,8 @@ export async function gradeReadingLogAnswers(
     '',
     ...items.map((item, i) => `${i}. 질문: "${item.question}"\n   답변: "${item.answer}"`),
     '',
-    'results 배열에 각 항목마다 index(위 번호와 정확히 동일한 값)와 feedback(피드백 문장, 한국어 2~3문장)을 포함해서 반환하세요.',
+    'results 배열에 각 항목마다 index(위 번호와 정확히 동일한 값)와 feedback(피드백 문장, 2~3문장)을 포함해서 반환하세요.',
+    '언어: 질문이 영어로 되어 있다면 피드백도 영어로 작성하세요. 질문이 한국어라면 피드백도 한국어로 작성하세요.',
   ].join('\n');
 
   const { object } = await generateObject({
