@@ -1,0 +1,6 @@
+[day01]
+1. eloquent
+2. resilient
+3. ambiguous
+4. meticulous
+5. ubiquitous

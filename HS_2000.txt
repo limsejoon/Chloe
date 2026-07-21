@@ -1,0 +1,6 @@
+[day01]
+1. apple
+2. river
+3. mountain
+4. gentle
+5. curious
