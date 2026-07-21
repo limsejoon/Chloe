@@ -29,14 +29,16 @@ export default async function HomePage() {
         <span className="text-text-faint">→</span>
       </Link>
       {wordbooks.length > 0 && (
-        <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-          <span className="text-xs font-bold text-text-muted">테스트 중 초기화</span>
-          <div className="flex flex-wrap gap-3">
+        <details className="group mt-4 border-t border-border pt-4">
+          <summary className="cursor-pointer list-none text-xs font-bold text-text-muted [&::-webkit-details-marker]:hidden">
+            단어집 초기화 <span className="inline-block transition group-open:rotate-180">▾</span>
+          </summary>
+          <div className="mt-3 flex flex-wrap gap-3">
             {wordbooks.map((wb) => (
               <ResetWordbookButton key={wb.id} wordbookId={wb.id} wordbookName={wb.name} />
             ))}
           </div>
-        </div>
+        </details>
       )}
     </main>
   );
