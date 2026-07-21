@@ -5,7 +5,7 @@ import { and, eq, gte, lte } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { words, attempts } from '@/db/schema';
 import { sampleRandom } from '@/lib/sampleRandom';
-import { gradeAnswer, type GradingResult } from '@/lib/grading';
+import { gradeAnswers, type GradingResult } from '@/lib/grading';
 
 export interface FreeQuizWord {
   id: number;
@@ -41,32 +41,51 @@ export async function startFreeQuiz(
   };
 }
 
-export interface SubmitAnswerResult extends GradingResult {
+export interface FreeQuizAnswer {
+  wordId: number;
+  word: string;
+  userAnswer: string;
+}
+
+export interface FreeQuizBatchResultItem extends GradingResult {
+  wordId: number;
+  word: string;
+}
+
+export interface SubmitFreeQuizBatchResult {
+  results: FreeQuizBatchResultItem[];
   saveWarning: string | null;
 }
 
-export async function submitFreeAnswer(
+export async function submitFreeQuizBatch(
   sessionId: string,
-  wordId: number,
-  word: string,
-  userAnswer: string
-): Promise<SubmitAnswerResult> {
-  const result = await gradeAnswer(word, userAnswer);
+  items: FreeQuizAnswer[]
+): Promise<SubmitFreeQuizBatchResult> {
+  const graded = await gradeAnswers(items.map((item) => ({ word: item.word, userAnswer: item.userAnswer })));
+
+  const results: FreeQuizBatchResultItem[] = items.map((item, i) => ({
+    wordId: item.wordId,
+    word: item.word,
+    correct: graded[i].correct,
+    feedback: graded[i].feedback,
+  }));
 
   let saveWarning: string | null = null;
   try {
-    await db.insert(attempts).values({
-      sessionId,
-      wordId,
-      mode: 'free',
-      round: null,
-      userAnswer,
-      isCorrect: result.correct,
-      feedback: result.feedback,
-    });
+    await db.insert(attempts).values(
+      items.map((item, i) => ({
+        sessionId,
+        wordId: item.wordId,
+        mode: 'free' as const,
+        round: null,
+        userAnswer: item.userAnswer,
+        isCorrect: graded[i].correct,
+        feedback: graded[i].feedback,
+      }))
+    );
   } catch {
     saveWarning = '결과 저장에 실패했습니다. 진행에는 문제없습니다.';
   }
 
-  return { ...result, saveWarning };
+  return { results, saveWarning };
 }
