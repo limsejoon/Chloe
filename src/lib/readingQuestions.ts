@@ -14,7 +14,21 @@ export interface ReadingQuestionsResult {
 
 const MODEL = process.env.CLAUDE_GRADING_MODEL ?? 'claude-sonnet-4-5';
 
+// 제목/지은이에 한글이 하나라도 섞여 있으면 한국어(번역서)로, 로마자만 있으면 영어 원서로 판단한다.
+// 대소문자/철자가 정확하지 않아도(예: 소문자, 오타) 흔들리지 않도록 Claude의 추론이 아니라
+// 코드에서 직접 판별해서 프롬프트에 명령형으로 못박는다.
+function detectLanguage(title: string, author: string): 'ko' | 'en' {
+  const hasHangul = /[가-힣ㄱ-ㆎ]/.test(`${title} ${author}`);
+  return hasHangul ? 'ko' : 'en';
+}
+
 export async function generateReadingQuestions(title: string, author: string): Promise<ReadingQuestionsResult> {
+  const language = detectLanguage(title, author);
+  const languageDirective =
+    language === 'en'
+      ? '중요: 이 책은 영어 원서입니다 (제목/지은이가 로마자로 되어 있음 — 대소문자나 철자가 정확하지 않아도 마찬가지입니다). questions 배열의 질문 3개를 반드시 100% 영어로만 작성하세요. 한국어를 절대 섞지 마세요.'
+      : '중요: 이 책은 한국어로 읽는 책입니다. questions 배열의 질문 3개를 반드시 100% 한국어로만 작성하세요.';
+
   const prompt = [
     `책 제목: "${title}"`,
     `지은이: "${author}"`,
@@ -24,12 +38,12 @@ export async function generateReadingQuestions(title: string, author: string): P
     '',
     '이 책을 구체적으로 안다면, recognized를 true로 하고, 이 책의 실제 등장인물·사건·상황을 구체적으로 언급하는 질문을 정확히 3개 만드세요. 세 질문은 아래 구조를 정확히 따라야 합니다:',
     '',
-    '- 1번, 3번 질문: 두 부분으로 구성된 복합 질문. 먼저 책의 특정 장면/사건에서 실제로 무슨 일이 있었는지 간단히 요약하게 하고, 그 다음에 그 상황에 대한 아이 자신의 생각이나 감정을 묻습니다. (예: "OO 장면에서 무슨 일이 있었는지 먼저 설명해보고, 그때 주인공이 어떤 마음이었을지 네 생각도 말해줘.") 단순 사실 확인이 아니라 감정·공감·더 깊은 생각까지 이끌어내되, 먼저 실제 사건 요약이 있어야만 답할 수 있는 형태여야 합니다.',
-    '- 2번 질문: 감상이나 의견을 묻지 않는, 순수한 사실 확인 질문. 책의 다른 특정 장면/사건에서 실제로 무슨 일이 있었는지만 요약하게 하세요. (예: "OO 장면에서 정확히 무슨 일이 있었는지 설명해봐.")',
+    '- 1번, 3번 질문: 두 부분으로 구성된 복합 질문. 먼저 책의 특정 장면/사건에서 실제로 무슨 일이 있었는지 간단히 요약하게 하고, 그 다음에 그 상황에 대한 아이 자신의 생각이나 감정을 묻습니다. 단순 사실 확인이 아니라 감정·공감·더 깊은 생각까지 이끌어내되, 먼저 실제 사건 요약이 있어야만 답할 수 있는 형태여야 합니다.',
+    '- 2번 질문: 감상이나 의견을 묻지 않는, 순수한 사실 확인 질문. 책의 다른 특정 장면/사건에서 실제로 무슨 일이 있었는지만 요약하게 하세요.',
     '',
     '세 질문 모두 이 책의 실제 등장인물·사건·상황을 구체적으로 지목해야 하며, 책을 제대로 읽지 않으면 답할 수 없는 수준이어야 합니다.',
     '',
-    '언어: 책 제목/지은이가 영어로 되어 있으면(즉 아이가 원서를 영어로 읽는 경우) 질문을 전부 영어로 작성하세요. 한국어로 되어 있으면 한국어로 작성하세요.',
+    languageDirective,
   ].join('\n');
 
   const { object } = await generateObject({
@@ -60,6 +74,12 @@ export async function gradeReadingLogAnswers(
   author: string,
   items: ReadingAnswerItem[]
 ): Promise<string[]> {
+  const language = detectLanguage(title, author);
+  const languageDirective =
+    language === 'en'
+      ? '중요: 이 책은 영어 원서입니다. results의 feedback을 반드시 100% 영어로만 작성하세요. 한국어를 절대 섞지 마세요.'
+      : '중요: 이 책은 한국어로 읽는 책입니다. results의 feedback을 반드시 100% 한국어로만 작성하세요.';
+
   const prompt = [
     `책 "${title}" (지은이: ${author})에 대한 독서록 질문과 아이의 답변입니다. 각 답변에 대해 피드백을 주세요.`,
     '',
@@ -72,7 +92,8 @@ export async function gradeReadingLogAnswers(
     ...items.map((item, i) => `${i}. 질문: "${item.question}"\n   답변: "${item.answer}"`),
     '',
     'results 배열에 각 항목마다 index(위 번호와 정확히 동일한 값)와 feedback(피드백 문장, 2~3문장)을 포함해서 반환하세요.',
-    '언어: 질문이 영어로 되어 있다면 피드백도 영어로 작성하세요. 질문이 한국어라면 피드백도 한국어로 작성하세요.',
+    '',
+    languageDirective,
   ].join('\n');
 
   const { object } = await generateObject({
