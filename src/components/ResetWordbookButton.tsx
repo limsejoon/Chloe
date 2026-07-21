@@ -25,10 +25,13 @@ export function ResetWordbookButton({ wordbookId, wordbookName }: { wordbookId: 
 
   return (
     <button
-      className="text-xs font-semibold text-error underline disabled:opacity-50"
+      className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-text-muted shadow-card transition hover:border-error hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
       onClick={handleReset}
       disabled={resetting}
     >
+      <span aria-hidden className="text-sm leading-none">
+        ↺
+      </span>
       {resetting ? '초기화 중...' : `${wordbookName} 초기화`}
     </button>
   );

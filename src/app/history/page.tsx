@@ -36,7 +36,7 @@ export default async function HistoryPage() {
                     s.mode === 'free' ? 'bg-primary-tint text-primary' : 'bg-accent-tint text-accent'
                   }`}
                 >
-                  {s.mode === 'free' ? '자유 퀴즈' : '회독 모드'}
+                  {s.mode === 'free' ? '자유 퀴즈' : '영단어 테스트'}
                 </span>
                 <span className="font-extrabold tabular-nums text-primary">
                   {s.correctCount}/{s.total}

@@ -151,7 +151,7 @@ export function ReviewQuizFlow({ wordbooks }: { wordbooks: WordbookOption[] }) {
           className="rounded-full bg-primary p-3.5 font-bold text-white transition hover:bg-primary-dark"
           onClick={handleStart}
         >
-          회독 시작
+          테스트 시작
         </button>
       </div>
     );
